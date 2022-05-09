@@ -10,12 +10,19 @@ class Person {
 }
 
 class PersonPlus extends Person {
+    constructor(name, first, second, third){
+        super(name, first, second);
+        this.third = third;
+    }
+    sum() {
+        return super.sum() + this.third;
+    }
     avg() {
-        return (this.first + this.second)/2
+        return (this.first + this.second + this.third)/3
     }
 }
 
-const kim = new PersonPlus('lee', 10, 20);
+const kim = new PersonPlus('lee', 10, 20, 30);
 console.log('kim : ', kim);
 console.log("kim.sum(): ", kim.sum());
 console.log("kim.avg(): ", kim.avg());

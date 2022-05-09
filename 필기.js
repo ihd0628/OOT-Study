@@ -1,3 +1,5 @@
+const { links } = require("express/lib/response")
+
 $ 객체란. 
 서로 연관된 변수와 함수를 그룹핑하고 이름을 붙인것. 
 
@@ -1265,7 +1267,7 @@ class PersonPlus extends Person {
         this.third = third;
     }
     sum() {
-        return this.first + this.second + this.third;
+        return super.sum() + this.third;
     }
     avg() {
         return (this.first + this.second + this.third)/3
@@ -1276,6 +1278,11 @@ const kim = new PersonPlus('lee', 10, 20);
 console.log('kim : ', kim);
 console.log("kim.sum(): ", kim.sum());
 console.log("kim.avg(): ", kim.avg());
+
+(출력)
+kim :  PersonPlus { name: 'lee', first: 10, second: 20, third: 30 }
+kim.sum():  60
+kim.avg():  20
 **********************************************************************************************************************************
 
 super 는 2가지 사용법이 있다. 
@@ -1285,4 +1292,791 @@ super 는 2가지 사용법이 있다.
     생성자 안에서 부모class의 프로퍼티들이 세팅이 되기때문에 자식class는 새로 추가할 것 만 넣어주면 된다. 
 
 2. super 
- -> 부
+ -> 부모 class를 그대로 가져온것이다. 그래서 super.sum() 을 해주면 부모 class인 Person 에서 sum() 메소드를 가져올 수 있는것 이다. 
+    그러면 super.sum() 은  this.first + this.second 을 return 해주고 거기다가 this.third 더해줘서 전부 더해준 값을 return 해주게 되는것이다. 
+
+super에 괄호가 있으면 부모클래스의 생성자, 괄호가 없으면 부모클래스 자체를 뜻한다. 
+만약 super라는 기능이 없으면, 자식클래스에서 부모클래스의 속성과 기능에 추가적인 무언가를 넣어 활용때 다시 부모클래스의 코드를 사용해야하는 중복이 발생할 것이다.
+
+
+
+# object inheritance
+
+객체지향 프로그래밍은 크게 2가지 요소로 나뉘어져 있다. 
+
+첫번째는 객체를 만들어내는 공장인 class_
+두번째는 그 class를 통해 만들어진 객체 
+
+이다. 
+    
+그래서 이 두가지의 요소들이 어떻게 상호작용하느냐에 따라서 
+다양한 객체지향언어들이 만들어진다. 
+
+그래서 주류객체지향언어인 JAVA와 비슷한 문법을가진 언어들이 있고 
+javascript는 JAVA와 이름은 비슷하지만 상당히 다른 차이점을 가지고있는 객체지향 언어이다. 
+prototype based language 라고 부를정도로 말이다. 
+
+JAVA와 같은 주류객체지향 언어에서는 상속을 
+sub class가 super class의 자식이 된다. 
+그리고 그렇게 만들어진 sub class를 통해서 객체를 생성해낸다. 
+
+그렇기 때문에 이렇게 만등어진 객체가 어떠한 기능을 갖게 될것인지라는것은 class단에서 결정이 된다. 
+객체가 다른 객체의 상속을 받는다는것은 불가능하다. 
+그냥 객체는 그냥 생성되면서 모든 기능이 결정이 되게 된다. 
+
+물론 javascript에서도 class가 있고 extends가 있지만 그것은 그냥 장식일 뿐 이다. 
+javascript가 동작하는 내부 메커니즘이 바뀌는건 없다. 
+그냥 다른 언어를 쓰던 사람들이 편하게 쓸 수 있게 도입된 문법일 뿐 이다. 
+
+javascript는 훨씬 자유로우면서도 혼란스럽다. 
+javascript는 sub객체가 super 객체의 기능을 직접 상속받을 수 있다. 
+
+전통적인 주류객체지향언어에서는 class가 상속을 받는데 
+javascript에서는 객체가 직접 다른 객체의 상속을 받을 수 있고 
+내가 얼마든지 그 상속관계를 바꿀 수 있다. 
+그 상속관계를 바꿀 때는 link만 바꿔주면 되는데 그 링크가 'prototype link' 이다. 
+
+그리고 이러한 맥락에서 이 'sub object'의 'prototype link'가 가리키고있는 객체를 'prototype object' 라고 한다. 
+
+자 그러니 이제 javascript의 객체지향은 어떻게 다른지 한번 자세히 살펴보자. 
+
+
+
+
+# __proto__ 
+
+자 이제 class가 아닌 javascript의 전통적인 방법으로 상속을 하는 방법을 아라보자. 
+
+**********************************************************************************************************************************
+superObj = {superVal: 'super'};
+subObj = {subVal: 'sub'};
+**********************************************************************************************************************************
+
+위의 코드에서 superObj 와 subObj는 현재까지는 서로 남남이다. 
+그런데 javascript에서는 class가 아닌 instance 즉, 객체를 직접 다른 객체의 자식으로 만들어버릴 수 있다. 
+
+어떻게 하냐면 
+subObj의 원형을 정해주는 protoType link를 정해주면 되는데 
+그걸 하기 위해서 subObj에 '__proto__' 라는 속성을 주고 (이 속성은 이미 있는것인데 값을 따로 지정해주는것이다.)
+그 '__proto__' 속성의 값으로 superObj 를 지정해주면 된다. 
+
+이를 통해서 subObj에서 superVal을 가져올 수 있게 된다. 
+아래코드와 출력처럼 말이다. 아주 놀랍다. 
+
+**********************************************************************************************************************************
+superObj = {superVal: 'super'};
+subObj = {subVal: 'sub'};
+subObj.__proto__ = superObj;
+console.log('subObj.subVal =>', subObj.subVal);
+console.log('subObj.superVal =>', subObj.superVal);
+
+(출력)
+subObj.subVal => sub
+subObj.superVal => super
+**********************************************************************************************************************************
+
+즉, '__proto__' 라는 prototype link를 통해서 subObj가 superObj의 자식이다 라는걸 우리가 위의 코드처럼 링크를 걸어주니까 
+javascript가 제일먼저 subObj 에서 superVal 이라는 프로퍼티가 있는지 찾아보고 없으니까 
+__proto__ 라는 속성이 담고있는 객체에서 superVal 을 찾아다가 있으면 가져다 쓰는거다. 
+
+또한 자식객체를 통해서 부모객체를 바꿀수는 없다. 
+아래처럼 코드를 작성하면 그냥 자식객체 그 자체를 바꾸는 거지 부모객체에게는 털끝하나 건들리 수 없다. 
+
+**********************************************************************************************************************************
+superObj = {superVal: 'super'};
+subObj = {subVal: 'sub'};
+subObj.__proto__ = superObj;
+console.log('subObj.subVal =>', subObj.subVal);
+console.log('subObj.superVal =>', subObj.superVal);
+
+subObj.superVal = 'sub';
+console.log('superObj.superVal =>', superObj.superVal);
+
+(츌력)
+subObj.subVal => sub
+subObj.superVal => super
+superObj.superVal => super
+**********************************************************************************************************************************
+
+하지만 이 '__proto__' 는 정석이 아니다. 
+이것은 뭐랄까.. 약간... 아무튼 정석은 아니다. 
+
+정석의 방법을 한번 아라보자. 
+
+
+
+
+# Object.create()
+
+자 이제 __proto__ 의 대체제를 아라보자. 
+
+-> var subObj = Object.create(superObj);
+
+자... 이거다. 
+저렇게 하면 superObj 를 부모객체로 하는 개로운 객체를 subObj 변수에 return 해준다. 
+
+**********************************************************************************************************************************
+superObj = {superVal: 'super'};
+// subObj = {subVal: 'sub'};
+// subObj.__proto__ = superObj;
+var subObj = Object.create(superObj);
+subObj.subVal = 'sub';
+console.log('subObj.subVal =>', subObj.subVal);
+console.log('subObj.superVal =>', subObj.superVal);
+
+subObj.superVal = 'sub';
+console.log('superObj.superVal =>', superObj.superVal);
+
+(출력)
+subObj.subVal => sub
+subObj.superVal => super
+superObj.superVal => super
+**********************************************************************************************************************************
+
+위처럼 부모객체를 받아서 새로운 객체를 subObj 에 return 해준 후 그 새로만든 자식객체인 subObj에 subVal 프로퍼티를 할당해주면 
+저 주석처리 된 부분과 완전히 똑같은 기능과 결과를 하게 되는 것 이다. 
+
+저 __proto__ 를 사용하는것 보다는 Object.create() 를 사용해서 객체와 객체간의 상속관계 
+좀 더 명확하게는 proto link 를 지정해주는것이 더 좋은 방법 이라고 할 수 있다. 
+
+
+
+# 객체상속의 사용
+
+지금은 생성자함수를 상속하는게 아니라 직접 만든 객체간의 상속에 대한 내용이라는걸 잊지 말자. 
+자 아래처럼 코드를 작성해주면 javascript는 lee 에서 sum() 메소드가 있는지 찾아보고 없으면 __proto__ 링크를 통해 
+부모객체에 sum() 메소드가 있는지 다시 확인 후 고것을 사용한다. 
+
+또한 lee 객체에만 별도로 avg() 라는 메소드를 아래처럼 추가해줄 수 도 있다. 
+**********************************************************************************************************************************
+const kim = {
+    name: 'kim',
+    fisrt: 10,
+    second: 20,
+    sum: function() {return this.fisrt + this.second}
+}
+
+const lee = {
+    name: 'lee',
+    fisrt: 10,
+    second: 10,
+    avg: function(){
+        return (this.fisrt + this.second)/2
+    }
+}
+
+lee.__proto__ = kim;
+
+console.log('lee.sum() => ', lee.sum());
+console.log('lee.avg() => ', lee.avg());
+
+(출력)
+lee.sum() =>  20
+lee.avg() =>  10
+**********************************************************************************************************************************
+
+그렇다면 요걸 권장되는 방법인 Object.create() 를 사용하면 아래처럼 작성하면 되겠다. 
+
+**********************************************************************************************************************************
+const kim = {
+    name: 'kim',
+    fisrt: 10,
+    second: 20,
+    sum: function() {return this.fisrt + this.second}
+}
+
+// const lee = {
+//     name: 'lee',
+//     fisrt: 10,
+//     second: 10,
+//     avg: function(){
+//         return (this.fisrt + this.second)/2
+//     }
+// }
+// lee.__proto__ = kim;
+
+const lee = Object.create(kim);
+lee.name = 'lee';
+lee.fisrt = 10;
+lee.second = 10;
+lee.avg = function() {
+    return (this.fisrt + this.second)/2
+}
+
+console.log('lee.sum() => ', lee.sum());
+console.log('lee.avg() => ', lee.avg());
+
+(출력)
+lee.sum() =>  20
+lee.avg() =>  10
+**********************************************************************************************************************************
+
+
+
+# 객체와 함수
+
+javascript의 유연함. 프로그램이 실행되고있는 런타임에서 객체를 상속한다는 이 엄청난 유연함이 끝이 아니다. 
+
+javascript 에서는 함수가 그냥 함수가 아니다. 
+new 를 붙이면 객체를 생성하는 생성자가 된다. 
+많은 객체지향언어에서 이 함수라는것은 특정한 객체나 class에 종속된것으로 보지만 
+javascript에서는 함수는 신과같은 존재다. 
+
+그냥 혼자 존재하다가도 필요에 따라 어떤 객체의 메소드도 될 수 가 있다. 
+
+이러한 관점에서 이제부터 배울 call, bind, this 라는것이 객체지향에서 얼마나 중요한건지 한번 배워보자. 
+
+
+
+# call 
+
+const kim = {name: 'kim', first: 10, second: 20};
+const lee = {name: 'lee', first: 10, second: 10};
+
+위처럼 2개의 객체가 있을 때 
+
+lee.__proto__ = kim;
+
+요래 해주면 kim은 lee의 부모객체가 된다. 
+이게 굉장히 다른 객체지향언어에 비해 유연한 특성이 되는것이다. 
+
+근데 이거말고 이 객체들에게 sum 이라는 메소드를 줄것인데
+
+function sum() {
+    return this.first + this.second
+}
+
+이상하지 않은가?
+지금 저 sum함수는 어떤 객체에도 속해있지 않다. 
+
+아니 그럼 저 lee나 kim이 저 함수를 어떻게 가져다가 쓸 수 있는걸까 
+그 떄 사용하는게 바로 call 이다. 
+
+sum.call();
+
+이렇게 해주면 된다. 
+이것은 sum(); <- 요것과 같은 의미이다. 
+
+아니 그럼 그냥 sum() 하면 되지 굳이 왜 sum.call() 이걸 해주는가? 
+
+모든 함수는 call() 이라는 메소드를 가지고 있다. 
+ -> javascript에서는 함수도 객체이기 때문 
+
+그리고 이 함수의 call() 메소드를 호출할 때 첫번쨰 인자로 어떠한 객체를 주게되면 
+즉, 
+
+sum.call(kim);
+
+이렇게 해주면 
+sum.call(kim) 이 싫행될 때 내부적으로 어떤 일 이 일어나게 되는거냐면 
+this 는 kim 객체게 되는것이다...
+
+아래의 코드의 출력값을 통해 확인할 수 있다. 
+
+**********************************************************************************************************************************
+const kim = {name: 'kim', first: 10, second: 20};
+const lee = {name: 'lee', first: 10, second: 10};
+
+function sum() {
+    return this.first + this.second
+}
+console.log('sum.call(kim) => ', sum.call(kim));
+
+(출력)
+sum.call(kim) =>  30
+**********************************************************************************************************************************
+
+즉, 이 코드에서 sum 이라고하는 저 function은 kim이라고하는 객체의 메소드가 아니었는데 
+call 이라고하는 저 특이한 요상망측한 함수를 호출할 때 첫번쨰 인자로 sum 이 내부적으로 사용할 this의 값을 kim 으로 지정했더니 
+sum 이라는 함수가 kim의 멤버인 메소드가 된 것 이다. 
+
+그러면 만약에 우리가 sum.call(lee);
+인자로 lee 를 주게되면 그러면 또 sum 함수의 this 를 lee 객체로 쓰게 되는것이다. 
+
+**********************************************************************************************************************************
+const kim = {name: 'kim', first: 10, second: 20};
+const lee = {name: 'lee', first: 10, second: 10};
+
+function sum() {
+    return this.first + this.second
+}
+console.log('sum.call(kim) => ', sum.call(kim));
+console.log('sum.call(lee) => ', sum.call(lee));
+
+(출력)
+sum.call(kim) =>  30
+sum.call(lee) =>  20
+**********************************************************************************************************************************
+
+근데 만야게 원래 함수에 사용할 변수가 있다면 어떻게 할까?
+그러면 
+sum.call(객체, 원래함수의인자1, 원래함수의인자2, ...); 
+이렇게 첫번쨰 인자로는 this에 할당될 객체를 넣어주고 그 뒤로 원래 함수의 인자들을 넣어주면 된다. 
+아래의 코드처럼 사용할 수 있는것 이다. 
+
+**********************************************************************************************************************************
+const kim = {name: 'kim', first: 10, second: 20};
+const lee = {name: 'lee', first: 10, second: 10};
+
+function sum(prefix) {
+    return prefix + this.first + this.second
+}
+console.log('sum.call(kim) => ', sum.call(kim, 10));
+console.log('sum.call(lee) => ', sum.call(lee, 10));
+
+(출력)
+sum.call(kim) =>  40
+sum.call(lee) =>  30
+**********************************************************************************************************************************
+
+
+
+# bind 
+
+call은 기존함수를 실행 시킬 때 그것의 this 객체를 지정해준뒤 그 기존함수 자체를 실행시켜준다면,
+bind는 기존함수에 this 객체를 지정한뒤 그렇게 지정된 함수를 return 해준다. 
+
+**********************************************************************************************************************************
+const kim = {name: 'kim', first: 10, second: 20};
+const lee = {name: 'lee', first: 10, second: 10};
+
+function sum(prefix) {
+    return prefix + (this.first + this.second)
+}
+console.log('sum.call(kim) ', sum.call(kim, '->'));
+console.log('sum.call(lee) ', sum.call(lee, '-->'));
+
+const kimsum = sum.bind(kim, '--->')
+console.log('kimsum()', kimsum());
+
+(출력)
+sum.call(kim)  ->30
+sum.call(lee)  -->20
+kimsum() --->30
+**********************************************************************************************************************************
+
+bind는 새로운 함수가 만들어져서 return 되는것이기 때문에 기존의 sum 함수에는 영향을 주지 않는다. 
+
+call은 실행되는 함수의 this값을 원하는 객체로 바꿔서 실행할 수 있게 해준다. 
+bind는 실행되는 함수의 this값을 원하는 객체로 고정시키는 새로운 함수를 만들어낸다.
+
+
+
+# prototype vs proto
+
+function Person() {};
+var Person = new function();
+
+javascript에서 함수는 객체이고 그렇기 때문에 위의 두 구문은 완전히 같은의미이다. 
+또한 javascript에서 함수는 객체이고 그렇기 떄문에 프로퍼티를 가질 수 있다. 
+
+function Person(name, fisrt, second) {
+    this.name = name;
+    this.first = first;
+    this.second = second;
+}
+
+위와같은 함수를 정의했을 때 
+그러면 저 함수는 객체이기 때문에 Person 이라고하는 새로운 객체가 생성이 된다. 
+그런데 객체가 하나 더 생성된다. 
+그것은 바로 저 Person의 prototype 객체이다. 
+
+그리고 이 Person 객체와 Person의 prototype 객체는 서로 연관되어있기 때문에 서로의 존재를 알아야하고 
+그렇기 때문에 Person 이라는 객체에는 prototype 이라는 프로퍼티가 생기고 그 프로퍼티는 Person의 prototype 객체를 가리킨다. 
+
+그렇기에 Pesron.protoype 이라고 하면 그것은 Person의 prototype 객체인 것이다.
+
+그러면 Person의 prototype 객체도 자신이 Pesron 객체의 소속이라는것을 어디에 기록해놔야하는데 
+그렇기에 constructor 라는 프로퍼티를 만들고 그 프로퍼티는 Person을 가리킨다. 
+
+이렇게 서로간에 상호참조를 하고 있는 것 이다. 
+
+Person.prototype.sum = function(){}
+그리고 위와같은 코드를 정의해주면 이것은 어떠한 의미를 가지냐면 
+Person의 prototype 객체에 sum 이라는 함수를 정의해주는것이다. 
+
+그러면 이제 우리가 객체를 찍어내는 공장인 Person 이라고하는 생성자함수를 만든것이다. 
+그리고 이제 아래처럼 kim 이라는 객체를 생성하게 되면 
+
+var kim = new Person('kim', 10, 20)
+
+kim 이라는 객체가 생기고 
+생성자함수인 Person 가 실행이되면서  this 값이 세팅된 결과 각 name, fist, secon 프로퍼티의 값이 세팅이 되고 
+동시에 "__proto__" 라는 프로퍼티도 생성이 된다. 
+
+그리고 kim 이라는 객체가 생성이 될 때 저 "__proto__" 프로퍼티는 Person의 prototype 객체를 가리키게 된다. 
+
+var lee = new Person('lee', 10, 20)
+위처럼 lee라는 객체를 생성해도 
+그 lee 객체의 __proto__ 프로퍼티는 자신을 생성한 함수의 prototype 객체를 가리킨다. 
+
+그럼 이 상태에서 kim.name 을 호출하려고하면 javascript는 kim 이라는 객체에 name 이라는 프로퍼티가 있는지를 확인하고 있으니까 
+그 name이라는 프로퍼티에 저장된 값을 출력할 것 이다. 
+
+혹여나 만약에 없다면 __proto__ 가 가리키는 객체에 name이 있는지를 다시 찾아본다. 
+
+그러니까 kim.sum() 을 해주면 
+javascript는 kim 이라는 객체에 sum 이라는 메소드가 있는지 확인을 먼저 하고 없으니까 
+__proto__ 를 통해서 이 __proto__ 가 가리키는 Person의 prototypeq 객체에 sum 이 있는지를 찾고 있으니까 그놈을 사용을 하는것이다. 
+
+그리고 만약에 Person의 prototype 객체에 없다?
+그러면 또 거기서 __proto__ 를 보고 이게 가리키는 누군가를 찾아서 올라가는것이다. 
+
+이렇것이 지금까지 우리가 작성한 코드가 동작할 때의 내부적인 속사정인것이다. 
+
+Person의 prototype은 말 그대로 prototype object를 가집니다.
+그리고 객체들의 __proto__는 prototype이 가리키고 있는 object로 향하는 링크이다. 그 메모리의 주소값이라고 보면 될것 같다. 
+
+
+
+# 생성자 함수를 통한 상속 : 소개
+
+기본적으로 상속은 class문법을 사용하는게 더 쉽고 안전하다고 보여진다. 
+그래도 전통적인 javascript 문법에서의 생성자함수를 사용한 상속의 방법도 알아야곘지. 
+그전에 class문법을 이용하여 상속을 구현한 아래의 코드를 다시 리뷰해보자. 
+
+**********************************************************************************************************************************
+class Person {
+    constructor(name, first, second){
+        this.name = name;
+        this.first = first;
+        this.second = second;
+    }
+    sum() {
+        return this.first + this.second;
+    }
+}
+
+class PersonPlus extends Person {
+    constructor(name, first, second, third){
+        super(name, first, second);
+        this.third = third;
+    }
+    sum() {
+        return super.sum() + this.third;
+    }
+    avg() {
+        return (this.first + this.second + this.third)/3
+    }
+}
+
+const kim = new PersonPlus('lee', 10, 20, 30);
+console.log('kim : ', kim);
+console.log("kim.sum(): ", kim.sum());
+console.log("kim.avg(): ", kim.avg());
+**********************************************************************************************************************************
+
+위의 코드를 보면 Person 이라는 class를 만들었고 
+그 class가 new 를 통해서 생성될 때 class안의 constructor_function이 실행이 되면서 초기값이 생성된다. 
+그리고 그 객체는 sum 이라는 메소드를 가지고있는데 이 메소드는 만들어진 그 객체의 소속이 아니고 
+만들어진 객체의 prototype의 소식이기 때문에 저 Person을 이용해서 생성된 모든 객체가 공유하는 메소드/함수 이다. 
+
+그리고 PersonPlus 라는 class를 만들었는데 저 class의 모든 기능을 다 구현하는게 아니라 
+Person의 기능을 물려받는다라고 extends를 통해 선언을 하고 
+super 라는 메소드를 통해서 부모class가 가지고 있는 constructor 함수를 실행하고 
+그리고 this.third를 넣는것은 별도로 자식 class에서 별도로 실행하는것을 통해서 
+부모의 코드를 재활용하면서 자신만의 작업을 할 수 있게 된다. 
+
+sum 이라는 메소드또한 부모가 이미 가지고 있기 때문에 super.sum 을 통해서 재활용하고 거기에 자식만의 작업을 추가했다. 
+
+avg 메소드는 부모한테 없었던 메소드이기 때문에 PersonPlus에 추가된 부분이다. 
+
+
+
+# 생성자 함수를 통한 상속 : 부모 생성자 실행
+
+**********************************************************************************************************************************
+function Person(name, first, second) {
+    this.name = name;
+    this.first = first;
+    this.second = second;
+}
+Person.prototype.sum = function() {
+    return this.first + this.second;
+}
+
+function PersontPlus(name, first, second, third) {
+    Person.call(this, name, first, second);
+    this.third = third;    
+}
+PersontPlus.prototype.avg = function() {
+    return (this.first + this.second + this.third)/3;
+}
+
+const kim = new PersontPlus('lee', 10, 20, 30);
+console.log('kim : ', kim);
+console.log("kim.sum(): ", kim.sum());
+console.log("kim.avg(): ", kim.avg()); 
+**********************************************************************************************************************************
+
+기존 class문법을 사용하던 코드를 생성자 함수를 이용하여 위와같이 작성하였다. 
+(PersonPlus 의 내부는 아직 미작성 상태)
+
+function PersontPlus(name, first, second, third) {
+    Person.call(this, name, first, second);
+    this.third = third;    
+}
+
+이부분을 주목하자. 
+아래의 class문법과 동일한 부분 인데 
+
+class PersonPlus extends Person {
+    constructor(name, first, second, third){
+        super(name, first, second);
+        this.third = third;
+    }
+}
+
+super 대신 call 메소드를 사용한것이다. 
+call 메소드를 사용하면 해당 생성자함수의 this를 call 메소드의 첫번쨰 인자로 할당해주는 기능을 해주는데 
+Person 생성자함수의 this 를 PersonPlus의 this 로 할당해 줌으로서 이전 Person 생성자함수의 기능을 고대로 가져오게 되는것이다. 
+그냥 아래처럼 call 안써주고 Person 함수 가져다가 쓰면 안된다. 
+그 떄 Person 함수 안의 this는 PersonPlus의 this와 다르기 때문이다. !
+
+function PersontPlus(name, first, second, third) {
+    Person(name, first, second);
+    this.third = third;    
+}
+
+자 이렇게 이전 Person 함수를 호출하는것 까진 헀는데 
+PersonPlus는 아직 sum 메소드를 아직 가지고 있지 않다. 
+왜냐면 우리가 아직 상속관께를 표현해주지 않았으니까 !
+
+
+
+# 생성자 함수를 통한 상속 : 부모와 연결하기
+
+**********************************************************************************************************************************
+function Person(name, first, second) {
+    this.name = name;
+    this.first = first;
+    this.second = second;
+}
+Person.prototype.sum = function() {
+    return this.first + this.second;
+}
+
+function PersontPlus(name, first, second, third) {
+    Person.call(this, name, first, second);
+    this.third = third;    
+}
+PersontPlus.prototype.avg = function() {
+    return (this.first + this.second + this.third)/3;
+}
+
+const kim = new PersontPlus('lee', 10, 20, 30);
+console.log('kim : ', kim);
+console.log("kim.sum(): ", kim.sum());
+console.log("kim.avg(): ", kim.avg()); 
+**********************************************************************************************************************************
+
+위의 코드에서 아직 PersonPlus와 Person은 부모자식관계가 아니다. 
+아무런 관련이 없다. 
+
+현재의 상태는 하기와같은 이미지1 과 같은 상태이다. 
+
+자 이상태에서 우리가 PersonPlus 를 기반으로해서 new 연산자를 사용해서 kim 이라는 객체를 만들었다. 
+그러면 이 객체를 생성하면 무슨일이 생기냐면 그 kim 객체의 __proto__ 가 자신을 생성한 생성자함수의 prototype이 가리키고 있는 객체를 가리키게 된다. 
+하기 이미지2와 같은 상태인 것 이다. 
+
+여기서 kim.avg() 를 실행하면 어떻게 동작할까? 
+일단 kim 이라는 객체에는 avg 라는 프로퍼티가 있는지 찾아보고 없는걸 확인후 
+__proto__ 를 따라가서 PersonPlus의 prototype 객체의 avg가 있는지를 확인한다. 
+근디 PersonPlus 에는 avg가 있으니까 실행이 되는거다. 
+
+근데 kim.sum() 을 해주게 되면 
+동일한 프로세스로 PersonPlus의 prototype 객체를 찾는데 
+없네?
+그러면 javascript는 에러를 내버린다. 
+어떻게 해야할까? 간단하지. 
+PersonPlus의 prototype 객체의 __proto__ 가 Person의 prototype 객체를 가리키게 하면 된다. 
+ ->기본적으로 객체가 만들어질 때 __proto__는 object 라고하는 객체의 prototype 객체를 가리키도록 약속이 되어있다. 
+
+코드로 구현하는것은 아주 쉽다. 
+그냥 아래처럼 값만 넣어주면 된다. 
+
+**********************************************************************************************************************************
+function Person(name, first, second) {
+    this.name = name;
+    this.first = first;
+    this.second = second;
+}
+Person.prototype.sum = function() {
+    return this.first + this.second;
+}
+
+function PersonPlus(name, first, second, third) {
+    Person.call(this, name, first, second);
+    this.third = third;    
+}
+PersonPlus.prototype.__proto__ = Person.prototype;   <- 여기!!!여기서 넣어준겨!!!!!!
+
+PersonPlus.prototype.avg = function() {
+    return (this.first + this.second + this.third)/3;
+}
+
+const kim = new PersonPlus('lee', 10, 20, 30);
+console.log('kim : ', kim);
+console.log("kim.sum(): ", kim.sum());
+console.log("kim.avg(): ", kim.avg()); 
+**********************************************************************************************************************************
+
+근데 __proto__ 는 굳이 따지면 오피셜은 아니니까 
+object.creat() 를 사용해서 구현해보자. 
+object.creat() 는 인자로 들어가는 객체를 __proto__ 의 값으로 가지는 객체를 return 해주는것이다. !
+아래의 코드처럼 짜면 된다. 
+**********************************************************************************************************************************
+function Person(name, first, second) {
+    this.name = name;
+    this.first = first;
+    this.second = second;
+}
+Person.prototype.sum = function() {
+    return this.first + this.second;
+}
+
+function PersonPlus(name, first, second, third) {
+    Person.call(this, name, first, second);
+    this.third = third;    
+}
+//PersonPlus.prototype.__proto__ = Person.prototype;
+PersonPlus.prototype = Object.create(Person.prototype); <- Person.prototype을 __proto__ 로 가지는 객체를 만들어서 return 해주는거다.!!!!
+
+PersonPlus.prototype.avg = function() {
+    return (this.first + this.second + this.third)/3;
+}
+
+const kim = new PersonPlus('lee', 10, 20, 30);
+console.log('kim : ', kim.constructor);
+console.log("kim.sum(): ", kim.sum());
+console.log("kim.avg(): ", kim.avg()); 
+
+(출력)
+kim :  [Function: Person]       <- ??? 이게 뭐여 ???
+kim.sum():  30
+kim.avg():  20
+**********************************************************************************************************************************
+
+
+근데 이거...이거 아주 큰 문제가 있다. 
+출력을 보니 kim 객체의 생성자함수가 Person 으로 되어있다. 
+하지만 kim 의 생성자함수는 PersonPlus 가 되어야한다. 
+요원티다. 
+그것을 해결해주기 위해서 
+
+PersonPlus.prototype.constructor = PersonPlus;
+아래처럼 이코드를 넣어주면 된다.  
+
+**********************************************************************************************************************************
+function Person(name, first, second) {
+    this.name = name;
+    this.first = first;
+    this.second = second;
+}
+Person.prototype.sum = function() {
+    return this.first + this.second;
+}
+
+function PersonPlus(name, first, second, third) {
+    Person.call(this, name, first, second);
+    this.third = third;    
+}
+//PersonPlus.prototype.__proto__ = Person.prototype;
+PersonPlus.prototype = Object.create(Person.prototype);
+PersonPlus.prototype.constructor = PersonPlus;
+
+PersonPlus.prototype.avg = function() {
+    return (this.first + this.second + this.third)/3;
+}
+
+const kim = new PersonPlus('lee', 10, 20, 30);
+console.log('kim : ', kim.constructor);
+console.log("kim.sum(): ", kim.sum());
+console.log("kim.avg(): ", kim.avg()); 
+
+(출력)
+kim :  [Function: PersonPlus]  <- 이거지. 
+kim.sum():  30
+kim.avg():  20
+**********************************************************************************************************************************
+
+
+
+
+# 생성자 함수를 통한 상속 : constructor 속성은 무엇인가?
+
+근데 나는 constructor 속성이 뭔지 아직 모른다. 
+모르는데 그냥 넣은거다. 
+이제 그게 뭔지 알아보자. 
+
+자 하기 '이미지3' 처럼 Person 이라는 객체가 있는데 저 객체가 prototype 프로퍼티를 통해서 
+Person의 prototype 객체를 참고하고있고 다시 역으로 Person의 prototype 객체는 constructor 라는걸 통해서 Person을 참고한다. 
+즉, Person 과 Person의 prototype 객체는 각각 prototype 프로퍼티와 constructor 프로퍼티를 통해 서로 상호참조하고있는 상태 이다. 
+
+그리고 우리가 생성자함수인 Perons을 new 를통해서 사용하여 새로운 객체를 만들면 그 새로운 객체는 __proto__ 를통해서 생성자함수의 prototype 객체를 가리킨다. 
+
+그러면 우리가 여기에서 kim.constructor 라고하면 이건 뭘 가리킬까?
+일단 kim 이라는 객체에는 constructor 프로퍼티가 없으니 __proto__ 가 가리키는 Person의 prototype 객체를 찾아가서 보니까 있네?
+그러면 그게 뭘 가리키나 봤더니 Perons 생성자 함수이네?
+즉, kim.constructor는 kim 이라는 객체를 생성한 생성자함수구나... 라는걸 알 수 있다. 
+
+그러니 앞으로는 어떤객체가 있는데
+오잉 이건 도대체 어떤 생성자가 만든거지? 라는 궁금증이 생기면 
+->어떤객체.constructor  요거 해주면 다 알 수 있다. 아주 조타. 
+
+
+
+
+# 생성자 함수를 통한 상속 : constructor 속성 바로잡기
+
+-> PersonPlus.prototype = Object.create(Person.prototype);
+이렇게 Object.create 를 해주면 새로운 객체로 PersontPlus.prototype 을 교체해버린다. 
+
+-> PersonPlus.prototype.__proto__ = Person.prototype; 
+이것과는 의미가 달라지는건데 
+
+기존의 PersonPlus.prototype 은 PersonPlus 를 가리키고 있었을텐데 
+그 기존의 객체를 replace 해버리기 때문에 더 이상 PersonPlus.prototype 은 PersonPlus 를 가리키지 않는다. 
+
+그러니 
+-> PersonPlus.prototype.constructor = PersonPlus; 
+이걸 해주는거다... 사실 뭐 땜빵이지. 
+
+그런디 이거 또 웃긴게 뭐냐면 아래처럼 순서를 바꾸면 PersonPlus.proto 이 replace 되면서 avg 기능이 지워져버린다. 
+
+**********************************************************************************************************************************
+function Person(name, first, second) {
+    this.name = name;
+    this.first = first;
+    this.second = second;
+}
+Person.prototype.sum = function() {
+    return this.first + this.second;
+}
+
+function PersonPlus(name, first, second, third) {
+    Person.call(this, name, first, second);
+    this.third = third;    
+}
+//PersonPlus.prototype.__proto__ = Person.prototype;
+
+PersonPlus.prototype.avg = function() {
+    return (this.first + this.second + this.third)/3;
+}
+PersonPlus.prototype = Object.create(Person.prototype);
+PersonPlus.prototype.constructor = PersonPlus;
+
+const kim = new PersonPlus('lee', 10, 20, 30);
+console.log('kim : ', kim.constructor);
+console.log("kim.sum(): ", kim.sum());
+console.log("kim.avg(): ", kim.avg()); 
+
+(출력)
+TypeError: kim.avg is not a function_
+**********************************************************************************************************************************
+
+그러니 __proto__ 를 쓰면 깔끔하게 해결되지만 또 __proto__ 는 비표준이니까...
+내가 가치를 어디에 두느냐에따라 사용하니마니 하는거지 뭐. 
+
+
+
